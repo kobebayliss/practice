@@ -1,23 +1,24 @@
 #include <iostream>
 #include <random>
 
-void drawBoard(char *spaces);
-void playerMove(char *spaces, char player);
-void computerMove(char *spaces, char computer);
-char getWinner(char *spaces, char player, char computer);
+void drawBoard();
+void playerMove(char player);
+void computerMove(char computer);
+char getWinner(char player, char computer);
+
+char spaces[9];
 
 int main() {
-	char spaces[9];
 	std::fill(spaces, spaces + 9, ' ');
 	char player = 'X';
 	char computer = 'O';
 	char winner = 'N';
 	while (winner == 'N') {
-		playerMove(spaces, player);
-		winner = getWinner(spaces, player, computer);
+		playerMove(player);
+		winner = getWinner(player, computer);
 		if (winner != 'N') break;
-		computerMove(spaces, computer);
-		winner = getWinner(spaces, player, computer);
+		computerMove(computer);
+		winner = getWinner(player, computer);
 	}
 	if (winner == player)
 		std::cout << "\nPLAYER WINS!\n";
@@ -25,26 +26,27 @@ int main() {
 		std::cout << "\nCOMPUTER WINS!\n";
 }
 
-void drawBoard(char *spaces) {
+void drawBoard() {
 	for (int i = 0; i < 9; i+=3) {
 		std::cout << " " << spaces[i] << " | " << spaces[i + 1] << " | " << spaces[i + 2] << " \n";
 		if (i != 6) {
 			std::cout << "---|---|---\n";
 		}
 	}
+	std::cout << '\n';
 }
 
-void playerMove(char *spaces, char player) {
+void playerMove(char player) {
 	int move;
 	do {
-		std::cout << "Enter move (1: top left, 2: top middle etc): \n";
+		std::cout << "Enter move (1: top left, 2: top middle, etc): \n";
 		std::cin >> move;
 	} while (move > 9 || move < 1 || spaces[move - 1] != ' ');
 	spaces[move - 1] = player;
-	drawBoard(spaces);
+	drawBoard();
 }
 
-void computerMove(char *spaces, char computer) {
+void computerMove(char computer) {
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> distr(0, 8);
@@ -52,12 +54,12 @@ void computerMove(char *spaces, char computer) {
 	do {
 		move = distr(gen);
 	} while (spaces[move] != ' ');
-	std::cout << "Computer chooses slot " << move + 1 << '\n';
+	std::cout << "\nComputer chooses slot " << move + 1 << '\n';
 	spaces[move] = computer;
-	drawBoard(spaces);
+	drawBoard();
 }
 
-char getWinner(char *spaces, char player, char computer) {
+char getWinner(char player, char computer) {
 	int wins[8][3] = {
 		{0,1,2},
 		{3,4,5},
@@ -70,11 +72,9 @@ char getWinner(char *spaces, char player, char computer) {
 	};
 	for (auto &combo : wins) {
 		if (spaces[combo[0]] == player && spaces[combo[1]] == player && spaces[combo[2]] == player ) {
-			std::cout << "PLAYER WINS!";
 			return player;
 		}
 		if (spaces[combo[0]] == computer && spaces[combo[1]] == computer && spaces[combo[2]] == computer ) {
-			std::cout << "COMPUTER WINS!";
 			return computer;
 		}
 
