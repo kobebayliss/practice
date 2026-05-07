@@ -10,17 +10,33 @@ public:
 		this->cols = cols;
 	}
 	bool runCommand(std::string command) {
-		int first_space = command.find(' ');
-		std::string keyword = command.substr(0, first_space);
-		if (keyword == "SET") {
-			// set logic
-		} else if (keyword == "PRINT") {
-			// print logic
-		} else if (keyword == "EXIT") {
-			// exit logic
+		if (command == "SET") {
+			return set(command);
+		} else if (command == "PRINT") {
+			std::cout << "print command\n";
+		} else if (command == "EXIT") {
+			std::cout << "exit command\n";
 		} else {
-			std::cout << "Enter a valid command.";
+			std::cout << "Enter a valid command.\n";
 		}
+		return true;
+	}
+	bool set(std::string command) {
+		int row, col;
+		std::string value;
+		std::cout << "Enter a square to change (eg. '1 4'): \n";
+		std::cin >> row >> col;
+		std::cin.ignore();
+		std::cout << "enter value (eg. =14 or =1,4 + 5,3): \n";
+		std::getline(std::cin, value);
+		value = value.substr(1);
+		size_t opIndex = value.find_first_of("+-/*");
+		if (opIndex == std::string::npos) {
+			// basic setting logic
+		} else {
+			// setting from other squares logic
+		}
+		return true;
 	}
 };
 
@@ -35,11 +51,13 @@ int main() {
 			std::cin.ignore(10000, '\n');
 		}
 	} while (std::cin.fail() || rows <= 0 || cols <= 0);
-
+	std::cin.ignore(10000, '\n');
+	Spreadsheet sheet(rows, cols);
 	std::string command;
 	do {
-		std::cout << "Enter commands (SET A1 50, PRINT, EXIT): ";
+		std::cout << "Enter command (SET A1 50, PRINT, EXIT): ";
 		std::getline(std::cin, command);
+		sheet.runCommand(command);
 
 	} while (command != "EXIT");
 	return 0;
