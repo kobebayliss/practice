@@ -71,10 +71,7 @@ public:
 			throw std::invalid_argument("Invalid side");
 		}
 	}
-	void cancel_order(size_t id) {
-		Order* order = orders.find(id)->second;
-		prices_map& map = (order->side == "buy") ? buy_orders : sell_orders;
-		PriceLevel& price_level = map.find(order->price)->second;
+	void remove_from_price_level(Order* order, PriceLevel& price_level, prices_map& map) {
 		if (order->next != nullptr) {
 			Order* next_order = order->next;
 			if (order->prev != nullptr) {
@@ -94,10 +91,28 @@ public:
 		if (price_level.volume == 0) {
 			map.erase(order->price);
 		}
+	}
+	void cancel_order(size_t id) {
+		Order* order = orders.find(id)->second;
+		prices_map& map = (order->side == "buy") ? buy_orders : sell_orders;
+		PriceLevel& price_level = map.find(order->price)->second;
+		remove_from_price_level(order, price_level, map);
 		order->next = nullptr;
 		order->prev = nullptr;
 		orders.erase(id);
 		delete order;
+	}
+	void update_order(size_t id, double new_price, size_t new_quantity) {
+		Order* order = orders.find(id)->second;
+		double old_price = order->price;
+		size_t old_quantity = order->quantity;
+		prices_map& map = (order->side == "buy") ? buy_orders : sell_orders;
+		PriceLevel& old_price_level = map.find(old_price)->second;
+		std::string side = order->side;
+		remove_from_price_level(order, old_price_level, map);
+		order->price = new_price;
+		order->quantity = new_quantity;
+		// add to new price level
 	}
 };
 
