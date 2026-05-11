@@ -104,29 +104,42 @@ public:
 	}
 	void update_order(size_t id, double new_price, size_t new_quantity) {
 		Order* order = orders.find(id)->second;
-		double old_price = order->price;
-		size_t old_quantity = order->quantity;
+		if (order->price == new_price && order->quantity == new_quantity)
+			return;
 		prices_map& map = (order->side == "buy") ? buy_orders : sell_orders;
-		PriceLevel& old_price_level = map.find(old_price)->second;
-		std::string side = order->side;
+		PriceLevel& old_price_level = map.find(order->price)->second;
 		remove_from_price_level(order, old_price_level, map);
 		order->price = new_price;
 		order->quantity = new_quantity;
-		// add to new price level
+		auto it = map.find(new_price);
+		if (it == map.end()) {
+			order->prev = nullptr;
+			order->next = nullptr;
+			map.emplace(new_price, PriceLevel(new_price, new_quantity, order, order));
+		} else {
+			PriceLevel& new_price_level = it->second;
+			new_price_level.volume += new_quantity;
+			Order* tail = new_price_level.tail;
+			tail->next = order;
+			order->prev = tail;
+			order->next = nullptr;
+			new_price_level.tail = order;
+		}
 	}
 };
 
 int main() {
-	OrderBook* order_book = new OrderBook();
-	order_book->place_order(33.34, 20, "buy");
-	order_book->place_order(33.34, 30, "buy");
-	order_book->place_order(33.36, 50, "buy");
-	order_book->place_order(33.40, 20, "sell");
-	order_book->place_order(33.39, 20, "sell");
-	std::cout << order_book->get_top("buy") << std::endl;
-	std::cout << order_book->get_top("sell") << std::endl;
-	order_book->cancel_order(3);
-	std::cout << order_book->get_top("buy") << std::endl;
-	delete order_book;
+	OrderBook order_book;
+	order_book.place_order(33.34, 20, "buy");
+	order_book.place_order(33.34, 30, "buy");
+	order_book.place_order(33.36, 50, "buy");
+	order_book.place_order(33.40, 20, "sell");
+	order_book.place_order(33.39, 20, "sell");
+	std::cout << order_book.get_top("buy") << std::endl;
+	std::cout << order_book.get_top("sell") << std::endl;
+	order_book.cancel_order(3);
+	std::cout << order_book.get_top("buy") << std::endl;
+	order_book.update_order(2, 33.37, 100);
+	std::cout << order_book.get_top("buy") << std::endl;
 	return 0;
 }
