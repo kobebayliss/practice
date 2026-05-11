@@ -1,14 +1,17 @@
 #include <iostream>
 #include <map>
+#include <stdexcept>
 
 struct Order {
-	inline static size_t id = 1;
+	inline static size_t next_id = 1;
+	size_t id;
 	size_t quantity;
 	Order* next;
 	Order* prev;
 
 public:
 	Order(size_t quantity, Order* next, Order* prev) {
+		this->id = next_id++;
 		this->quantity = quantity;
 		this->next = next;
 		this->prev = prev;
@@ -51,7 +54,17 @@ public:
 			tail->next = order;
 			order->prev = tail;
 			price_level.tail = order;
-			std::cout << &price_level.tail;
+			std::cout << price_level.tail->quantity << std::endl;
+			std::cout << price_level.head->quantity << std::endl;
+		}
+	}
+	double get_top(std::string side) {
+		if (side == "buy") {
+			return buy_orders.rbegin()->first;
+		} else if (side == "sell") {
+			return sell_orders.begin()->first;
+		} else {
+			throw std::invalid_argument("Invalid side");
 		}
 	}
 };
@@ -59,6 +72,11 @@ public:
 int main() {
 	OrderBook* order_book = new OrderBook();
 	order_book->place_order(33.34, 20, "buy");
-	order_book->place_order(33.67, 30, "buy");
+	order_book->place_order(33.34, 30, "buy");
+	order_book->place_order(33.36, 50, "buy");
+	order_book->place_order(33.40, 20, "sell");
+	order_book->place_order(33.39, 20, "sell");
+	std::cout << order_book->get_top("buy") << std::endl;
+	std::cout << order_book->get_top("sell") << std::endl;
 	return 0;
 }
