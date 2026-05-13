@@ -2,17 +2,19 @@
 #include <map>
 #include <stdexcept>
 
+enum Side { BUY, SELL };
+
 struct Order {
 	inline static size_t next_id = 1;
 	size_t id;
 	double price;
 	size_t quantity;
-	std::string side;
+	Side side;
 	Order* next;
 	Order* prev;
 
 public:
-	Order(double price, size_t quantity, std::string side, Order* next, Order* prev) {
+	Order(double price, size_t quantity, Side side, Order* next, Order* prev) {
 		this->id = next_id++;
 		this->price = price;
 		this->quantity = quantity;
@@ -44,10 +46,10 @@ class OrderBook {
 	std::unordered_map<size_t, Order*> orders;
 
 public:
-	void place_order(double price, size_t quantity, std::string side) {
+	void place_order(double price, size_t quantity, Side side) {
 		Order* order = new Order(price, quantity, side, nullptr, nullptr);
 		orders[order->id] = order;
-		prices_map& map = (side == "buy") ? buy_orders : (side == "sell") ? sell_orders : throw std::invalid_argument("Invalid side");
+		prices_map& map = (side == BUY) ? buy_orders : (side == SELL) ? sell_orders : throw std::invalid_argument("Invalid side");
 		auto it = map.find(price);
 		if (it == map.end()) {
 			// new price level
@@ -63,10 +65,10 @@ public:
 		}
 		std::cout << "Your order is Order # : " << order->id << std::endl;
 	}
-	double get_top(std::string side) {
-		if (side == "buy") {
+	double get_top(Side side) {
+		if (side == BUY) {
 			return buy_orders.rbegin()->first;
-		} else if (side == "sell") {
+		} else if (side == SELL) {
 			return sell_orders.begin()->first;
 		} else {
 			throw std::invalid_argument("Invalid side");
@@ -95,7 +97,7 @@ public:
 	}
 	void cancel_order(size_t id) {
 		Order* order = orders.find(id)->second;
-		prices_map& map = (order->side == "buy") ? buy_orders : sell_orders;
+		prices_map& map = (order->side == BUY) ? buy_orders : sell_orders;
 		PriceLevel& price_level = map.find(order->price)->second;
 		remove_from_price_level(order, price_level, map);
 		order->next = nullptr;
@@ -107,7 +109,7 @@ public:
 		Order* order = orders.find(id)->second;
 		if (order->price == new_price && order->quantity == new_quantity)
 			return;
-		prices_map& map = (order->side == "buy") ? buy_orders : sell_orders;
+		prices_map& map = (order->side == BUY) ? buy_orders : sell_orders;
 		PriceLevel& old_price_level = map.find(order->price)->second;
 		remove_from_price_level(order, old_price_level, map);
 		order->price = new_price;
@@ -136,15 +138,15 @@ public:
 		PriceLevel& price_level = it->second;
 		return price_level.volume;
 	}
-	std::vector<double> get_top_k_prices(int k, std::string side) {
-		prices_map& map = (side == "buy") ? buy_orders : sell_orders;
+	std::vector<double> get_top_k_prices(int k, Side side) {
+		prices_map& map = (side == BUY) ? buy_orders : sell_orders;
 		std::vector<double> top_k_prices;
-		if (side == "buy") {
+		if (side == BUY) {
 			auto end = std::next(map.rbegin(), k);
 			for (auto it = map.rbegin(); it != end; ++it) {
 				top_k_prices.push_back(it->first);
 			}
-		} else if (side == "sell") {
+		} else if (side == SELL) {
 			auto end = std::next(map.begin(), k);
 			for (auto it = map.begin(); it != end; ++it) {
 				top_k_prices.push_back(it->first);
@@ -156,26 +158,26 @@ public:
 
 int main() {
 	OrderBook order_book;
-	order_book.place_order(33.34, 20, "buy");
-	order_book.place_order(33.34, 30, "buy");
-	order_book.place_order(33.36, 50, "buy");
-	order_book.place_order(33.40, 20, "sell");
-	order_book.place_order(33.39, 20, "sell");
-	std::cout << order_book.get_top("buy") << std::endl;
-	std::cout << order_book.get_top("sell") << std::endl;
+	order_book.place_order(33.34, 20, BUY);
+	order_book.place_order(33.34, 30, BUY);
+	order_book.place_order(33.36, 50, BUY);
+	order_book.place_order(33.40, 20, SELL);
+	order_book.place_order(33.39, 20, SELL);
+	std::cout << order_book.get_top(BUY) << std::endl;
+	std::cout << order_book.get_top(SELL) << std::endl;
 	order_book.cancel_order(3);
-	std::cout << order_book.get_top("buy") << std::endl;
+	std::cout << order_book.get_top(BUY) << std::endl;
 	order_book.update_order(2, 33.37, 100);
-	std::cout << order_book.get_top("buy") << std::endl;
-	order_book.place_order(33.34, 50, "buy");
+	std::cout << order_book.get_top(BUY) << std::endl;
+	order_book.place_order(33.34, 50, BUY);
 	std::cout << order_book.get_quantity_at_price(33.34) << std::endl;
-	std::vector<double> top_k_prices = order_book.get_top_k_prices(2, "buy");
+	std::vector<double> top_k_prices = order_book.get_top_k_prices(2, BUY);
 	std::string s;
 	for (double price : top_k_prices) {
 		s += std::to_string(price) + " ";
 	}
 	std::cout << s << std::endl;
-	std::vector<double> top_k_prices_2 = order_book.get_top_k_prices(2, "sell");
+	std::vector<double> top_k_prices_2 = order_book.get_top_k_prices(2, SELL);
 	std::string k;
 	for (double price : top_k_prices_2) {
 		k += std::to_string(price) + " ";
