@@ -5,7 +5,7 @@
 enum Side { BUY, SELL };
 
 struct Order {
-	inline static size_t next_id = 1;
+	inline static std::atomic<size_t> next_id = 1;
 	size_t id;
 	double price;
 	size_t quantity;
@@ -43,37 +43,7 @@ typedef std::map<double, PriceLevel> prices_map;
 class OrderBook {
 	prices_map buy_orders;
 	prices_map sell_orders;
-	std::unordered_map<size_t, Order*> orders;
-
-public:
-	void place_order(double price, size_t quantity, Side side) {
-		Order* order = new Order(price, quantity, side, nullptr, nullptr);
-		orders[order->id] = order;
-		prices_map& map = (side == BUY) ? buy_orders : (side == SELL) ? sell_orders : throw std::invalid_argument("Invalid side");
-		auto it = map.find(price);
-		if (it == map.end()) {
-			// new price level
-			map.emplace(price, PriceLevel(price, quantity, order, order));
-		} else {
-			// existing price level
-			PriceLevel& price_level = it->second;
-			price_level.volume += quantity;
-			Order* tail = price_level.tail;
-			tail->next = order;
-			order->prev = tail;
-			price_level.tail = order;
-		}
-		std::cout << "Your order is Order # : " << order->id << std::endl;
-	}
-	double get_top(Side side) {
-		if (side == BUY) {
-			return buy_orders.rbegin()->first;
-		} else if (side == SELL) {
-			return sell_orders.begin()->first;
-		} else {
-			throw std::invalid_argument("Invalid side");
-		}
-	}
+	std::unordered_map<size_t, std::unique_ptr<Order>> orders;
 	void remove_from_price_level(Order* order, PriceLevel& price_level, prices_map& map) {
 		if (order->next != nullptr) {
 			Order* next_order = order->next;
@@ -95,18 +65,47 @@ public:
 			map.erase(order->price);
 		}
 	}
+
+public:
+	void place_order(double price, size_t quantity, Side side) {
+		std::unique_ptr<Order> order_ptr = std::make_unique<Order>(price, quantity, side, nullptr, nullptr);
+		Order* order = order_ptr.get();
+		orders[order->id] = std::move(order_ptr);
+		prices_map& map = (side == BUY) ? buy_orders : sell_orders;
+		auto it = map.find(price);
+		if (it == map.end()) {
+			// new price level
+			map.emplace(price, PriceLevel(price, quantity, order, order));
+		} else {
+			// existing price level
+			PriceLevel& price_level = it->second;
+			price_level.volume += quantity;
+			Order* tail = price_level.tail;
+			tail->next = order;
+			order->prev = tail;
+			price_level.tail = order;
+		}
+		std::cout << "Your order is Order # : " << order->id << std::endl;
+	}
+	double get_top(Side side) {
+		if (side == BUY) {
+			return buy_orders.rbegin()->first;
+		} else {
+			return sell_orders.begin()->first;
+		}
+	}
 	void cancel_order(size_t id) {
-		Order* order = orders.find(id)->second;
+		auto it = orders.find(id);
+		Order* order = (it->second).get();
 		prices_map& map = (order->side == BUY) ? buy_orders : sell_orders;
 		PriceLevel& price_level = map.find(order->price)->second;
 		remove_from_price_level(order, price_level, map);
 		order->next = nullptr;
 		order->prev = nullptr;
-		orders.erase(id);
-		delete order;
+		orders.erase(it);
 	}
 	void update_order(size_t id, double new_price, size_t new_quantity) {
-		Order* order = orders.find(id)->second;
+		Order* order = (orders.find(id)->second).get();
 		if (order->price == new_price && order->quantity == new_quantity)
 			return;
 		prices_map& map = (order->side == BUY) ? buy_orders : sell_orders;
