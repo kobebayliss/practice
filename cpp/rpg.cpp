@@ -29,6 +29,10 @@ public:
 	Warrior(std::string name) : Character("Warrior", name, 100, 600) {};
 	~Warrior() { std::cout << "Destructing Warrior..." << std::endl; }
 	void attack(Character& target) override {
+		if (!target.isAlive()) {
+			std::cout << target.getName() + " is already dead." << std::endl;
+			return;
+		}
 		target.takeDamage(damage);
 		std::cout << name + " attacked " + target.getName() + " dealing " + std::to_string(damage) + " damage." << std::endl;
 		if (!target.isAlive()) {
@@ -50,6 +54,10 @@ public:
 			std::cout << name + " is out of mana!" << std::endl;
 			return;
 		}
+		if (!target.isAlive()) {
+			std::cout << target.getName() + " is already dead." << std::endl;
+			return;
+		}
 		target.takeDamage(damage);
 		std::cout << name + " attacked " + target.getName() + " dealing " + std::to_string(damage) + " damage." << std::endl;
 		if (!target.isAlive()) {
@@ -63,6 +71,10 @@ public:
 	Archer(std::string name) : Character("Archer", name, 100, 500) {};
 	~Archer() { std::cout << "Destructing Archer..." << std::endl; }
 	void attack(Character& target) override {
+		if (!target.isAlive()) {
+			std::cout << target.getName() + " is already dead." << std::endl;
+			return;
+		}
 		float total_damage;
 		std::random_device rd;
 		std::mt19937 gen(rd());
@@ -85,6 +97,10 @@ public:
 	Goblin() : Character("Goblin", "Larry", 150, 300) {};
 	~Goblin() { std::cout << "Destructing Goblin..." << std::endl; }
 	void attack(Character& target) override {
+		if (!target.isAlive()) {
+			std::cout << target.getName() + " is already dead." << std::endl;
+			return;
+		}
 		target.takeDamage(damage);
 		std::cout << name + " attacked " + target.getName() + " dealing " + std::to_string(damage) + " damage." << std::endl;
 		if (!target.isAlive()) {
@@ -98,6 +114,10 @@ public:
 	Troll() : Character("Troll", "Perry", 75, 1000) {};
 	~Troll() { std::cout << "Destructing Troll..." << std::endl; }
 	void attack(Character& target) override {
+		if (!target.isAlive()) {
+			std::cout << target.getName() + " is already dead." << std::endl;
+			return;
+		}
 		target.takeDamage(damage);
 		std::cout << name + " attacked " + target.getName() + " dealing " + std::to_string(damage) + " damage." << std::endl;
 		if (!target.isAlive()) {
