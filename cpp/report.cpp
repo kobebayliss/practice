@@ -6,9 +6,14 @@ struct Item {
 	std::string name;
 	size_t quantity;
 	double price;
+	Item(std::string name, size_t quantity, double price) {
+		this->name = name;
+		this->quantity = quantity;
+		this->price = price;
+	}
 };
 
-void generateReport(std::vector<Item>* pItems, bool (*filter)(Item), std::string (*derive)(Item)) {
+template <typename Filter> void generateReport(std::vector<Item>* pItems, Filter filter, std::string (*derive)(Item)) {
 	for (const Item& item : *pItems) {
 		if (filter(item)) {
 			std::cout << item.name << ": " << derive(item) << std::endl;
@@ -26,6 +31,9 @@ int main() {
 	Item i7("g", 850, 17.50);
 	Item i8("h", 650, 29.95);
 	std::vector<Item> items = {i1, i2, i3, i4, i5, i6, i7, i8};
-	generateReport(&items, [](Item i) { return i.quantity > 600; }, [](Item i) { return std::to_string(i.quantity * i.price); });
+	std::cout << "Enter quantity threshold: " << std::endl;
+	size_t quantity_threshold;
+	std::cin >> quantity_threshold;
+	generateReport(&items, [quantity_threshold](Item i) { return i.quantity > quantity_threshold; }, [](Item i) { return std::to_string(i.quantity * i.price); });
 	return 0;
 }
