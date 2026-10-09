@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 	if (!(is_valid_password(argv[2]))) {
 		return 1;
 	}
-	printf("SUCCESS");
+	perform_XOR(argv[1], new_file_name, argv[2]);
 	return 0;
 }
 
@@ -78,4 +78,34 @@ int is_valid_password(char *password) {
 		success = 0;
 	}
 	return success;
+}
+
+void perform_XOR(char *input_filename, char *output_filename, char *password) {
+	FILE* input = fopen(input_filename, "r");
+	FILE* output = fopen(output_filename, "w");
+	int password_length = strlen(password);
+	char block[256];
+	int count = 0;
+	int c;
+	int running = 1;
+	do {
+		c = fgetc(input);
+		if (c == EOF) {
+			running = 0;
+			break;
+		}
+		block[count] = c;
+		count++;
+		if (count == password_length) {
+			for (int i = 0; i < password_length; i++) {
+				fputc(block[i] ^ password[i], output);
+			}
+			count = 0;
+		}
+	} while (running);
+	for (int i = 0; i < count; i++) {
+		fputc(block[i] ^ password[i], output);
+	}
+	fclose(input);
+	fclose(output);
 }
