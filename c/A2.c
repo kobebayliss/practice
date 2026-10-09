@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	perform_XOR(argv[1], new_file_name, argv[2]);
+	print_first_five(new_file_name);
 	return 0;
 }
 
@@ -108,4 +109,15 @@ void perform_XOR(char *input_filename, char *output_filename, char *password) {
 	}
 	fclose(input);
 	fclose(output);
+}
+
+void print_first_five(char *filename) {
+	FILE* file = fopen(filename, "r");
+	int c;
+	for (int i = 0; i < 5; i++) {
+		c = fgetc(file);
+		if (c == EOF) break;
+		printf("%02x\n", c);
+	}
+	fclose(file);
 }
